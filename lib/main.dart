@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoder/geocoder.dart';
+// import 'package:flutter_google_maps/flutter_google_maps.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 
 void main() => runApp(MyApp());
 
@@ -44,9 +46,9 @@ class _MapsState extends State<Maps> {
   CameraPosition _home;
   CameraPosition _userpos;
 
-  // void _onCameraMove(CameraPosition position) {
-  //   _lastMapPosition = position.target;
-  // }
+  void _onCameraMove(CameraPosition position) {
+    _lastMapPosition = position.target;
+  }
 
   void _onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);
@@ -54,7 +56,6 @@ class _MapsState extends State<Maps> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _markers.add(Marker(
         markerId: markerId1,
@@ -83,7 +84,9 @@ class _MapsState extends State<Maps> {
                   markers: _markers.toSet(),
                   mapType: MapType.normal,
                   onMapCreated: _onMapCreated,
-                  
+                  // onTap: (newLatLng) {
+                  //   // _loadLoc(newLatLng, newSetState);
+                  // },
                   // onCameraMove: _onCameraMove,
                   initialCameraPosition: CameraPosition(
                     target: _center,
@@ -94,14 +97,16 @@ class _MapsState extends State<Maps> {
               SizedBox(
                 height: 5,
               ),
+              
               Card(
                 // padding: const EdgeInsets.all(8.0),
                 child: Container(
                   height: MediaQuery.of(context).size.height / 5.2,
                   width: MediaQuery.of(context).size.width - 10,
-                  child: Text('Address',
-                      style: TextStyle(color: Colors.grey, fontSize: 16)),
+                  // child:Text(_currentPosition.latitude.toString()),
+                  child: Text(''),
                 ),
+                
               ),
             ],
           ),
@@ -110,33 +115,38 @@ class _MapsState extends State<Maps> {
     );
   }
 
-  // _getLocationfromlatlng(double lat, double lng, newSetState) async {
-  //   final Geolocator geolocator = Geolocator()
-  //     ..placemarkFromCoordinates(lat, lng);
-  //   _currentPosition = await geolocator.getCurrentPosition(
-  //       desiredAccuracy: LocationAccuracy.high);
-  //   //debugPrint('location: ${_currentPosition.latitude}');
-  //   final coordinates = new Coordinates(lat, lng);
-  //   var addresses =
-  //       await Geocoder.local.findAddressesFromCoordinates(coordinates);
-  //   var first = addresses.first;
-  //   newSetState(() {
-  //     _homeloc = first.addressLine;
-  //     if (_homeloc != null) {
-  //       latitude = lat;
-  //       longitude = lng;
-  //       return;
-  //     }
-  //   });
-  //   setState(() {
-  //     _homeloc = first.addressLine;
-  //     if (_homeloc != null) {
-  //       latitude = lat;
-  //       longitude = lng;
-  //       return;
-  //     }
-  //   });
-  // }
+  Future<void>_getLocation() async {
+    final Geolocator geolocator = Geolocator()
+      ..forceAndroidLocationManager;
+    geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
+    .then((Position position) async {
+      _currentPosition = position;
+      if(_currentPosition != null){
+        final coordinates = new Coordinates(_currentPosition.latitude, _currentPosition.longitude);
+        var addresses =
+        await Geocoder.local.findAddressesFromCoordinates(coordinates);
+        setState(() {
+          var first = addresses.first;
+      _homeloc = first.addressLine;
+      if (_homeloc != null) {
+        latitude = _currentPosition.latitude;
+        longitude = _currentPosition.longitude;
+        // _calculatePayment();
+        return;
+      }
+    });
+      }
+    });
+    // _currentPosition = await geolocator.getCurrentPosition(
+        // desiredAccuracy: LocationAccuracy.high);
+    //debugPrint('location: ${_currentPosition.latitude}');
+    // final coordinates = new Coordinates(lat, lng);
+    // var addresses =
+        // await Geocoder.local.findAddressesFromCoordinates(coordinates);
+    // var first = addresses.first;
+    
+    
+  }
 
   //  void _loadLoc(LatLng loc, newSetState) async {
   //   newSetState(() {
@@ -154,20 +164,20 @@ class _MapsState extends State<Maps> {
   //       position: LatLng(latitude, longitude),
   //       infoWindow: InfoWindow(
   //         title: 'New Location',
-  //         snippet: 'New Delivery Location',
+  //         // snippet: 'New Delivery Location',
   //       ),
   //       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
   //     ));
   //   });
   //   _userpos = CameraPosition(
   //     target: LatLng(latitude, longitude),
-  //     zoom: 14.4746,
+  //     zoom: 17.0,
   //   );
   //   _newhomeLocation();
   // }
 
-  // Future<void> _newhomeLocation() async {
-  //   gmcontroller = await _controller.future;
-  //   gmcontroller.animateCamera(CameraUpdate.newCameraPosition(_home));
-  // }
+  Future<void> _newhomeLocation() async {
+    gmcontroller = await _controller.future;
+    gmcontroller.animateCamera(CameraUpdate.newCameraPosition(_home));
+  }
 }
