@@ -57,15 +57,16 @@ class _MapsState extends State<Maps> {
   @override
   void initState() {
     super.initState();
+    _getLocation();
     _markers.add(Marker(
         markerId: markerId1,
         position: _center,
         draggable: true,
         onTap: () {
           print('marker tapped');
-          // _loadLoc(newLatLng, newSetState);
-          // _getLocationfromlatlng(lat, lng, newSetState)
+          _getLocation();
         }));
+        // _getLocation();
   }
 
   @override
@@ -81,17 +82,19 @@ class _MapsState extends State<Maps> {
                 height: 2 * (MediaQuery.of(context).size.height / 3),
                 width: MediaQuery.of(context).size.width - 10,
                 child: GoogleMap(
-                  markers: _markers.toSet(),
+                  // markers: _markers.toSet(),
                   mapType: MapType.normal,
                   onMapCreated: _onMapCreated,
-                  // onTap: (newLatLng) {
-                  //   // _loadLoc(newLatLng, newSetState);
-                  // },
+                  
                   // onCameraMove: _onCameraMove,
                   initialCameraPosition: CameraPosition(
                     target: _center,
                     zoom: 17.0,
                   ),
+                  markers: _markers.toSet(),
+                  onTap: (newLatLng) {
+                    _loadLoc(newLatLng, newSetState);
+                  },
                 ),
               ),
               SizedBox(
@@ -103,8 +106,13 @@ class _MapsState extends State<Maps> {
                 child: Container(
                   height: MediaQuery.of(context).size.height / 5.2,
                   width: MediaQuery.of(context).size.width - 10,
-                  // child:Text(_currentPosition.latitude.toString()),
-                  child: Text(''),
+                  child: Column(
+                    children: [
+                      Text("Lat"+latitude.toString()+","+"Lng"+longitude.toString()),
+                      Text(""+_homeloc.toString()),
+                    ],
+                  ),
+                  
                 ),
                 
               ),
@@ -115,66 +123,92 @@ class _MapsState extends State<Maps> {
     );
   }
 
-  Future<void>_getLocation() async {
+  Future<void> _getLocation() async {
+    try {
+      final Geolocator geolocator = Geolocator()..forceAndroidLocationManager;
+      geolocator
+          .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
+          .then((Position position) async {
+        _currentPosition = position;
+        if (_currentPosition != null) {
+          final coordinates = new Coordinates(
+              _currentPosition.latitude, _currentPosition.longitude);
+          var addresses =
+              await Geocoder.local.findAddressesFromCoordinates(coordinates);
+          setState(() {
+            var first = addresses.first;
+            // _homeloc = first.addressLine;
+            if (_homeloc != null) {
+              latitude = _currentPosition.latitude;
+              longitude = _currentPosition.longitude;
+              _homeloc = first.addressLine;
+              return;
+            }
+          });
+        }
+      }).catchError((e) {
+        print(e);
+      });
+    } catch (exception) {
+      print(exception.toString());
+    }
+  }
+
+  void _loadLoc(LatLng loc, newSetState) async {
+    newSetState(() {
+      print("insetstate");
+      _markers.clear();
+      latitude = loc.latitude;
+      longitude = loc.longitude;
+      _getLocationfromlatlng(latitude, longitude, newSetState);
+      _home = CameraPosition(
+        target: loc,
+        zoom: 17,
+      );
+      _markers.add(Marker(
+        markerId: markerId1,
+        position: LatLng(latitude, longitude),
+        infoWindow: InfoWindow(
+          title: 'New Location',
+          snippet: 'New Mark Location',
+        ),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      ));
+    });
+    _userpos = CameraPosition(
+      target: LatLng(latitude, longitude),
+      zoom: 17,
+    );
+    _newhomeLocation();
+  }
+
+  _getLocationfromlatlng(double lat, double lng, newSetState) async {
     final Geolocator geolocator = Geolocator()
-      ..forceAndroidLocationManager;
-    geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
-    .then((Position position) async {
-      _currentPosition = position;
-      if(_currentPosition != null){
-        final coordinates = new Coordinates(_currentPosition.latitude, _currentPosition.longitude);
-        var addresses =
+      ..placemarkFromCoordinates(lat, lng);
+    _currentPosition = await geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+    //debugPrint('location: ${_currentPosition.latitude}');
+    final coordinates = new Coordinates(lat, lng);
+    var addresses =
         await Geocoder.local.findAddressesFromCoordinates(coordinates);
-        setState(() {
-          var first = addresses.first;
+    var first = addresses.first;
+    newSetState(() {
       _homeloc = first.addressLine;
       if (_homeloc != null) {
-        latitude = _currentPosition.latitude;
-        longitude = _currentPosition.longitude;
-        // _calculatePayment();
+        latitude = lat;
+        longitude = lng;
         return;
       }
     });
+    setState(() {
+      _homeloc = first.addressLine;
+      if (_homeloc != null) {
+        latitude = lat;
+        longitude = lng;
+        return;
       }
     });
-    // _currentPosition = await geolocator.getCurrentPosition(
-        // desiredAccuracy: LocationAccuracy.high);
-    //debugPrint('location: ${_currentPosition.latitude}');
-    // final coordinates = new Coordinates(lat, lng);
-    // var addresses =
-        // await Geocoder.local.findAddressesFromCoordinates(coordinates);
-    // var first = addresses.first;
-    
-    
   }
-
-  //  void _loadLoc(LatLng loc, newSetState) async {
-  //   newSetState(() {
-  //     print("insetstate");
-  //     _markers.clear();
-  //     latitude = loc.latitude;
-  //     longitude = loc.longitude;
-  //     _getLocationfromlatlng(latitude, longitude, newSetState);
-  //     _home = CameraPosition(
-  //       target: loc,
-  //       zoom: 16,
-  //     );
-  //     _markers.add(Marker(
-  //       markerId: markerId1,
-  //       position: LatLng(latitude, longitude),
-  //       infoWindow: InfoWindow(
-  //         title: 'New Location',
-  //         // snippet: 'New Delivery Location',
-  //       ),
-  //       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
-  //     ));
-  //   });
-  //   _userpos = CameraPosition(
-  //     target: LatLng(latitude, longitude),
-  //     zoom: 17.0,
-  //   );
-  //   _newhomeLocation();
-  // }
 
   Future<void> _newhomeLocation() async {
     gmcontroller = await _controller.future;
