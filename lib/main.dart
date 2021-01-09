@@ -45,6 +45,7 @@ class _MapsState extends State<Maps> {
   GoogleMapController gmcontroller;
   CameraPosition _home;
   CameraPosition _userpos;
+  var first;
 
   void _onCameraMove(CameraPosition position) {
     _lastMapPosition = position.target;
@@ -57,15 +58,12 @@ class _MapsState extends State<Maps> {
   @override
   void initState() {
     super.initState();
-    _getLocation();
+    _getLocation(_center);
     _markers.add(Marker(
         markerId: markerId1,
         position: _center,
         draggable: true,
-        onTap: () {
-          print('marker tapped');
-          _getLocation();
-        }));
+        ));
         // _getLocation();
   }
 
@@ -108,7 +106,7 @@ class _MapsState extends State<Maps> {
                   width: MediaQuery.of(context).size.width - 10,
                   child: Column(
                     children: [
-                      Text("Lat"+latitude.toString()+","+"Lng"+longitude.toString()),
+                      Text("Lat: "+latitude.toString()+" , "+"Lng: "+longitude.toString()),
                       Text(""+_homeloc.toString()),
                     ],
                   ),
@@ -123,36 +121,31 @@ class _MapsState extends State<Maps> {
     );
   }
 
-  Future<void> _getLocation() async {
-    try {
-      final Geolocator geolocator = Geolocator()..forceAndroidLocationManager;
-      geolocator
-          .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
-          .then((Position position) async {
-        _currentPosition = position;
-        if (_currentPosition != null) {
+  Future<void> _getLocation(position) async {
+    
+        if (position != null) {
           final coordinates = new Coordinates(
-              _currentPosition.latitude, _currentPosition.longitude);
-          var addresses =
-              await Geocoder.local.findAddressesFromCoordinates(coordinates);
+              position.latitude, position.longitude);
+              
+          var addresses = await Geocoder.local.findAddressesFromCoordinates(coordinates);
+           first = addresses.first.addressLine;
+           
           setState(() {
-            var first = addresses.first;
+           
             // _homeloc = first.addressLine;
-            if (_homeloc != null) {
-              latitude = _currentPosition.latitude;
-              longitude = _currentPosition.longitude;
-              _homeloc = first.addressLine;
+            
+              latitude = position.latitude;
+              longitude = position.longitude;
+              _homeloc = first;
+              print("Test "+_homeloc.toString());
               return;
-            }
-          });
+            
+          }
+          
+          );
         }
-      }).catchError((e) {
-        print(e);
-      });
-    } catch (exception) {
-      print(exception.toString());
-    }
-  }
+    } 
+  
 
   void _loadLoc(LatLng loc, newSetState) async {
     newSetState(() {
