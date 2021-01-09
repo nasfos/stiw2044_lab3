@@ -80,11 +80,8 @@ class _MapsState extends State<Maps> {
                 height: 2 * (MediaQuery.of(context).size.height / 3),
                 width: MediaQuery.of(context).size.width - 10,
                 child: GoogleMap(
-                  // markers: _markers.toSet(),
                   mapType: MapType.normal,
                   onMapCreated: _onMapCreated,
-                  
-                  // onCameraMove: _onCameraMove,
                   initialCameraPosition: CameraPosition(
                     target: _center,
                     zoom: 17.0,
@@ -98,15 +95,17 @@ class _MapsState extends State<Maps> {
               SizedBox(
                 height: 5,
               ),
-              
               Card(
-                // padding: const EdgeInsets.all(8.0),
                 child: Container(
+                  alignment: Alignment.centerLeft,
                   height: MediaQuery.of(context).size.height / 5.2,
                   width: MediaQuery.of(context).size.width - 10,
                   child: Column(
                     children: [
-                      Text("Lat: "+latitude.toString()+" , "+"Lng: "+longitude.toString()),
+                      Text("Lat: "+latitude.toString()+" , "+"Lng: "+longitude.toString(), style: TextStyle(fontWeight: FontWeight.bold, fontSize:16),),
+                      SizedBox(
+                height: 5,
+              ),
                       Text(""+_homeloc.toString()),
                     ],
                   ),
@@ -137,7 +136,7 @@ class _MapsState extends State<Maps> {
               latitude = position.latitude;
               longitude = position.longitude;
               _homeloc = first;
-              print("Test "+_homeloc.toString());
+              // print("Test "+_homeloc.toString());
               return;
             
           }
@@ -163,7 +162,6 @@ class _MapsState extends State<Maps> {
         position: LatLng(latitude, longitude),
         infoWindow: InfoWindow(
           title: 'New Location',
-          snippet: 'New Mark Location',
         ),
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
       ));
